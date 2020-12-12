@@ -14,3 +14,16 @@ def get_img_data(img_url, maxsize=(150, 150), first=False):
         return bio.getvalue()
     return ImageTk.PhotoImage(img)
 
+
+def update_thumbnail_preview(window, video):
+    # Update title
+    video_title = window['-video_title-']
+    title = video.title
+    video_title.update(title)
+
+    # Update image
+    video_img = window['-video_preview-']
+    img_url = video.thumbnail_url
+    img_data = get_img_data(img_url)
+    video_img.update(data=img_data)
+
