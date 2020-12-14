@@ -1,52 +1,43 @@
 import PySimpleGUI as sg
 from pytube import YouTube, exceptions, Playlist
 from helpers import get_img_data, update_thumbnail_preview, generate_folder
-from pathlib import Path
 import os
+from keys import Window, Button, Input, List, Video
 
 
-# TODO: Keys to Enums
-
-
-DEFAULT_DOWNLOAD_PATH = str(Path.home() / 'Downloads')
-
-WINDOW_WIDTH = 150
-WINDOW_HEIGHT = 150
-margins = (WINDOW_WIDTH, WINDOW_HEIGHT)
-DEFAULT_LINK = 'https://www.youtube.com/watch?v=F_rJFbWrK3Y'
 
 url_handler = [[sg.Text('URL: '),
-                sg.InputText(DEFAULT_LINK, key='-url-'),
-                sg.Button('Submit', enable_events=True, key='-submit_button-')],
-               [sg.Button('Upload Batch File (.txt only)', enable_events=True, key='-upload_button-'),
-                sg.Button('Delete selection', enable_events=True, disabled=True, key='-delete_selection-'),
-                sg.Button('Delete All', enable_events=True, disabled=True, key='-delete_all-')],
-               [sg.Listbox(values=[], size=(70, 20), enable_events=True, key='-list-')],
+                sg.InputText(Input.DEFAULT_LINK.value, key='-url-'),
+                sg.Button('Submit', enable_events=True, key=Button.SUBMIT)],
+               [sg.Button('Upload Batch File (.txt only)', enable_events=True, key=Button.UPLOAD),
+                sg.Button('Delete selection', enable_events=True, disabled=True, key=Button.DELETE_SELECTION),
+                sg.Button('Delete All', enable_events=True, disabled=True, key=Button.DELETE_ALL)],
+               [sg.Listbox(values=[], size=(70, 20), enable_events=True, key=List.DOWNLOAD_LIST)],
                [sg.Text('Download Location: ', size=(15, 1), auto_size_text=False),
-                sg.InputText(DEFAULT_DOWNLOAD_PATH, key='-download_location-'),
+                sg.InputText(Input.DEFAULT_DOWNLOAD_PATH.value, key=Input.DOWNLOAD_LOCATION),
                 sg.FolderBrowse()],
-               [sg.Button('Download All', enable_events=True, disabled=True, key='-download_all-')]]
+               [sg.Button('Download All', enable_events=True, disabled=True, key=Button.DOWNLOAD_ALL)]]
 
 DEFAULT_IMG_URL = 'https://i.ytimg.com/vi/mTOYClXhJD0/default.jpg'
 DEFAULT_TITLE = 'Title of the video'
 DEFAULT_IMG_DATA = get_img_data(DEFAULT_IMG_URL, first=True)
 
-video_preview = [[sg.Text(DEFAULT_TITLE, size=(30, 2), key='-video_title-')],
-                 [sg.Image(data=DEFAULT_IMG_DATA, key='-video_preview-')]]
+video_preview = [[sg.Text(DEFAULT_TITLE, size=(30, 2), key=Video.TITLE)],
+                 [sg.Image(data=DEFAULT_IMG_DATA, key=Video.THUMBNAIL)]]
 
 layout = [[sg.Column(url_handler),
            sg.VSeparator(),
            sg.Column(video_preview)]]
 
-window = sg.Window(title='Youtube Audio Batch Downloader', layout=layout, margins=margins, finalize=True)
+window = sg.Window(title='Youtube Audio Batch Downloader', layout=layout, margins=Window.MARGIN.value, finalize=True)
 
-submit_button = window['-submit_button-']
-video_list = window['-list-']
-delete_selection = window['-delete_selection-']
-delete_all = window['-delete_all-']
-video_img = window['-video_preview-']
+submit_button = window[Button.SUBMIT]
+video_list = window[List.DOWNLOAD_LIST]
+delete_selection = window[Button.DELETE_SELECTION]
+delete_all = window[Button.DELETE_ALL]
+video_img = window[Video.THUMBNAIL]
 
-download_button = window['-download_all-']
+download_button = window[Button.DOWNLOAD_ALL]
 title_list = []
 audio_download_list = []
 image_list = []
@@ -56,7 +47,7 @@ while True:
     event, values = window.read()
     if event == sg.WIN_CLOSED:
         break
-    elif event == '-submit_button-':
+    elif event == Button.SUBMIT:
         submit_button.update(disabled=True)
         url = values['-url-']
         try:
@@ -65,7 +56,7 @@ while True:
             print('bad link')
         else:
             # Update title
-            video_title = window['-video_title-']
+            video_title = window[Video.TITLE]
             title = video.title
             video_title.update(title)
 
@@ -85,7 +76,7 @@ while True:
             delete_all.update(disabled=False)
             delete_selection.update(disabled=False)
 
-    elif event == '-delete_selection-':
+    elif event == Button.DELETE_SELECTION:
         try:
             index = video_list.Widget.curselection()[0]
         except IndexError:
@@ -108,14 +99,14 @@ while True:
 
             video_list.update(title_list)
 
-    elif event == '-delete_all-':
+    elif event == Button.DELETE_ALL:
         title_list = []
         audio_download_list = []
         video_list.update(values=title_list)
         delete_all.update(disabled=True)
         delete_selection.update(disabled=True)
 
-    elif event == '-list-':
+    elif event == List.DOWNLOAD_LIST:
         print(event)
         try:
             index = video_list.Widget.curselection()[0]
@@ -125,10 +116,9 @@ while True:
             video_img.update(data=image_list[index])
             video_title.update(title_list[index])
 
-
-    elif event == '-download_all-':
+    elif event == Button.DOWNLOAD_ALL:
         folder_name = generate_folder()
-        download_path = os.path.join(values['-download_location-'], folder_name)
+        download_path = os.path.join(values[Input.DOWNLOAD_LOCATION], folder_name)
         print(download_path)
         for audio in audio_download_list:
             audio.download(download_path)
