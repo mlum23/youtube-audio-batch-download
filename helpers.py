@@ -3,7 +3,8 @@ from PIL import Image, ImageTk
 import requests
 import datetime
 
-def get_img_data(img_url, maxsize=(150, 150), first=False):
+
+def get_img_data(img_url, maxsize=(350, 350), first=False):
     response = requests.get(img_url, stream=True)
     img = Image.open(response.raw)
     img.thumbnail(maxsize)
