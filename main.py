@@ -27,21 +27,24 @@ url_handler = [[sg.Text('URL: '),
                 sg.FolderBrowse()],
                [sg.Button('Download All', enable_events=True, disabled=True, key='-download_all-')]]
 
-DEFAULT_IMG = 'https://i.ytimg.com/vi/mTOYClXhJD0/default.jpg'
-img_data = get_img_data(DEFAULT_IMG, first=True)
+DEFAULT_IMG_URL = 'https://i.ytimg.com/vi/mTOYClXhJD0/default.jpg'
+DEFAULT_TITLE = 'Title of the video'
+DEFAULT_IMG_DATA = get_img_data(DEFAULT_IMG_URL, first=True)
 
-video_preview = [[sg.Text('Title of the video', size=(30, 2), key='-video_title-')],
-                 [sg.Image(data=img_data, key='-video_preview-')]]
+video_preview = [[sg.Text(DEFAULT_TITLE, size=(30, 2), key='-video_title-')],
+                 [sg.Image(data=DEFAULT_IMG_DATA, key='-video_preview-')]]
 
 layout = [[sg.Column(url_handler),
            sg.VSeparator(),
            sg.Column(video_preview)]]
 
 window = sg.Window(title='Youtube Audio Batch Downloader', layout=layout, margins=margins, finalize=True)
+
 submit_button = window['-submit_button-']
 video_list = window['-list-']
 delete_selection = window['-delete_selection-']
 delete_all = window['-delete_all-']
+video_img = window['-video_preview-']
 
 download_button = window['-download_all-']
 title_list = []
@@ -67,7 +70,6 @@ while True:
             video_title.update(title)
 
             # Update image
-            video_img = window['-video_preview-']
             img_url = video.thumbnail_url
             img_data = get_img_data(img_url)
             video_img.update(data=img_data)
@@ -94,6 +96,13 @@ while True:
             if not title_list:
                 delete_all.update(disabled=True)
                 delete_selection.update(disabled=True)
+                video_img.update(data=DEFAULT_IMG_DATA)
+                video_title.update(DEFAULT_TITLE)
+            else:
+                if index == 0:
+                    index = 1
+                video_img.update(data=image_list[index - 1])
+                video_title.update(title_list[index - 1])
 
             video_list.update(title_list)
 
