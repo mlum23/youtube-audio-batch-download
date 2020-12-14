@@ -93,6 +93,8 @@ while True:
         else:
             del title_list[index]
             del audio_download_list[index]
+            del image_list[index]
+
             if not title_list:
                 delete_all.update(disabled=True)
                 delete_selection.update(disabled=True)
