@@ -24,6 +24,7 @@ class Input(Enum):
     DEFAULT_DOWNLOAD_PATH = str(Path.home() / 'Downloads')
     URL = '-url-'
     PLAYLIST_URL = '-playlist_url-'
+    CURRENT_DOWNLOAD = '-current_download-'
 
 
 class List(Enum):
@@ -33,4 +34,8 @@ class List(Enum):
 class Video(Enum):
     TITLE = '-video_title-'
     THUMBNAIL = '-video_thumbnail-'
+
+
+class ProgBar(Enum):
+    PROGRESS_BAR = '-prog_bar-'
 

@@ -3,7 +3,7 @@ from pytube import YouTube, exceptions, Playlist
 import pytube
 from helpers import get_img_data, update_thumbnail_preview, generate_folder
 import os
-from keys import Window, Button, Input, List, Video
+from keys import Window, Button, Input, List, Video, ProgBar
 
 
 url_handler = [
@@ -32,6 +32,12 @@ url_handler = [
     ],
     [
         sg.Button('Download All', enable_events=True, disabled=True, key=Button.DOWNLOAD_ALL)
+    ],
+    [
+        sg.ProgressBar(100, orientation='h', size=(20, 20), key=ProgBar.PROGRESS_BAR)
+    ],
+    [
+        sg.Text(size=(50, 1), key=Input.CURRENT_DOWNLOAD)
     ]
 ]
 
@@ -106,35 +112,49 @@ while True:
         # submit_playlist_button.update(disabled=True)
         url = values[Input.PLAYLIST_URL]
         try:
+            window[Input.CURRENT_DOWNLOAD].update('Initializing...')
             videos = Playlist(url)  # Returns array of URLs
+            window[ProgBar.PROGRESS_BAR].update(len(videos))
         except (exceptions.RegexMatchError, KeyError):
             sg.Popup('Cannot find video', title='Error')
 
         else:
-            for link in videos:
-                print(link)
-                try:
-                    video = YouTube(link)
-                except (exceptions.VideoUnavailable,
-                        exceptions.VideoPrivate,
-                        exceptions.VideoRegionBlocked):
-                    continue
-                else:
-                    title_list.append(video.title)
-                    audio_download_list.append(video.streams.get_audio_only())
+            print(f'Videos:{videos}')
+            print(len(videos))
+            count = 0
+            if len(videos) == 0:
+                sg.Popup('Invalid Playlist')
+                window[Input.CURRENT_DOWNLOAD].update('')
+            else:
+                for link in videos:
+                    try:
+                        video = YouTube(link)
+                        update_text = 'Currently loading: ' + video.title
+                        window[Input.CURRENT_DOWNLOAD].update(update_text)
+                    except (exceptions.VideoUnavailable,
+                            exceptions.VideoPrivate,
+                            exceptions.VideoRegionBlocked):
+                        continue
+                    else:
+                        title_list.append(video.title)
+                        audio_download_list.append(video.streams.get_audio_only())
 
-                    img_url = video.thumbnail_url
-                    img_data = get_img_data(img_url)
-                    video_img.update(data=img_data)
-                    image_list.append(img_data)
+                        img_url = video.thumbnail_url
+                        img_data = get_img_data(img_url)
+                        video_img.update(data=img_data)
+                        image_list.append(img_data)
+                        video_list.update(values=title_list)
+                        video_title.update(video.title)
+                    finally:
+                        window[ProgBar.PROGRESS_BAR].update_bar(count + 1)
+                        count += 1
 
-            video_list.update(values=title_list)
-            video_img.update(data=image_list[0])
-            video_title.update(title_list[0])
+                window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
 
-            download_button.update(disabled=False)
-            delete_all.update(disabled=False)
-            delete_selection.update(disabled=False)
+                download_button.update(disabled=False)
+                delete_all.update(disabled=False)
+                delete_selection.update(disabled=False)
+
 
     elif event == Button.DELETE_SELECTION:
         try:
