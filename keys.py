@@ -4,7 +4,7 @@ from pathlib import Path
 
 class Window(Enum):
     WIDTH = 150
-    HEIGHT = 150
+    HEIGHT = 100
     MARGIN = (WIDTH, HEIGHT)
 
 

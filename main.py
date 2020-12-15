@@ -1,13 +1,13 @@
 import PySimpleGUI as sg
 from pytube import YouTube, exceptions, Playlist
-from helpers import get_img_data, generate_folder, humansize
+from helpers import get_img_data, generate_folder, humansize, disable_buttons
 import os
 from keys import Window, Button, Input, List, Video, ProgBar, DownloadSize
 
 
 url_handler = [
     [
-        sg.Text('URL: '),
+        sg.Text('Video URL:'),
         sg.InputText(Input.DEFAULT_LINK.value, key=Input.URL),
         sg.Button('Submit', enable_events=True, key=Button.SUBMIT)
     ],
@@ -41,6 +41,8 @@ url_handler = [
     ]
 ]
 
+
+
 DEFAULT_IMG_URL = 'https://i.ytimg.com/vi/mTOYClXhJD0/default.jpg'
 DEFAULT_TITLE = 'Title of the video'
 DEFAULT_IMG_DATA = get_img_data(DEFAULT_IMG_URL, first=True)
@@ -48,11 +50,12 @@ DEFAULT_IMG_DATA = get_img_data(DEFAULT_IMG_URL, first=True)
 video_preview = [[sg.Text(DEFAULT_TITLE, size=(30, 2), key=Video.TITLE)],
                  [sg.Image(data=DEFAULT_IMG_DATA, key=Video.THUMBNAIL)]]
 
-layout = [[sg.Column(url_handler),
+layout = [[sg.Text('YouTube Audio Batch Downloader', font=("Helvetica", 32), justification='right')],
+          [sg.Column(url_handler),
            sg.VSeparator(),
            sg.Column(video_preview)]]
 
-window = sg.Window(title='Youtube Audio Batch Downloader', layout=layout, margins=Window.MARGIN.value, finalize=True)
+window = sg.Window(title='YouTube Audio Batch Downloader', size=(1200, 900), layout=layout, margins=Window.MARGIN.value, finalize=True)
 
 # Get video Elements
 video_list = window[List.DOWNLOAD_LIST]
@@ -81,7 +84,7 @@ while True:
         break
 
     elif event == Button.SUBMIT:
-        submit_button.update(disabled=True)
+        disable_buttons(True, submit_button, submit_playlist_button)
         url = values[Input.URL]
         try:
             video = YouTube(url)
@@ -107,17 +110,13 @@ while True:
             audio_download_list.append(audio)
             video_list.update(values=title_list)
 
-            download_button.update(disabled=False)
-            delete_all.update(disabled=False)
-            delete_selection.update(disabled=False)
+            disable_buttons(False, download_button, delete_all, delete_selection)
 
-        submit_button.update(disabled=False)
+        disable_buttons(False, submit_button, submit_playlist_button)
+        window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
 
     elif event == Button.PLAYLIST_SUBMIT:
-        download_button.update(disabled=True)
-        delete_all.update(disabled=True)
-        delete_selection.update(disabled=True)
-        submit_button.update(disabled=True)
+        disable_buttons(True, download_button, delete_all, delete_selection, submit_button, submit_playlist_button)
 
         url = values[Input.PLAYLIST_URL]
         try:
@@ -166,10 +165,7 @@ while True:
 
                 window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
 
-                download_button.update(disabled=False)
-                delete_all.update(disabled=False)
-                delete_selection.update(disabled=False)
-                submit_button.update(disabled=False)
+                disable_buttons(False, download_button, delete_all, delete_selection, submit_button, submit_playlist_button)
 
     elif event == Button.DELETE_SELECTION:
         try:
@@ -183,8 +179,7 @@ while True:
             del image_list[index]
 
             if not title_list:
-                delete_all.update(disabled=True)
-                delete_selection.update(disabled=True)
+                disable_buttons(True, delete_all, delete_selection)
                 video_img.update(data=DEFAULT_IMG_DATA)
                 video_title.update(DEFAULT_TITLE)
             else:
@@ -195,6 +190,11 @@ while True:
 
             video_list.update(title_list)
             window[DownloadSize.DOWNLOAD_SIZE].update(f'Approx. Download Size: {humansize(download_size)}')
+            if title_list:
+                window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
+            else:
+                window[Input.CURRENT_DOWNLOAD].update('Load a video to download')
+                disable_buttons(True, download_button)
 
     elif event == Button.DELETE_ALL:
         title_list = []
@@ -202,11 +202,12 @@ while True:
         image_list = []
         download_size = 0
         video_list.update(values=title_list)
-        delete_all.update(disabled=True)
-        delete_selection.update(disabled=True)
+        disable_buttons(True, delete_all, delete_selection, download_button)
         video_img.update(data=DEFAULT_IMG_DATA)
         video_title.update(DEFAULT_TITLE)
         window[DownloadSize.DOWNLOAD_SIZE].update(f'Approx. Download Size: 0 B')
+        window[ProgBar.PROGRESS_BAR].update_bar(0)
+        window[Input.CURRENT_DOWNLOAD].update('Load a video to download')
 
     elif event == List.DOWNLOAD_LIST:
         try:
@@ -224,9 +225,11 @@ while True:
         count = 0
         iter = 100 / num_videos
         window[Input.CURRENT_DOWNLOAD].update('Downloading: ')
-        for audio in audio_download_list:
-            window[Input.CURRENT_DOWNLOAD].update(f'Downloading: {audio.title} ')
-            audio.download(download_path)
+        for i in range(len(audio_download_list)):
+            window[Input.CURRENT_DOWNLOAD].update(f'Downloading: {audio_download_list[i].title} ')
+            audio_download_list[i].download(download_path)
+            video_img.update(data=image_list[i])
+            video_title.update(title_list[i])
             window[ProgBar.PROGRESS_BAR].update_bar(count + iter)
             count += iter
         window[Input.CURRENT_DOWNLOAD].update('Download completed!')

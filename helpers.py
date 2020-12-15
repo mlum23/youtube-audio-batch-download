@@ -35,6 +35,11 @@ def generate_folder():
     return name
 
 
+def disable_buttons(is_disabled, *args):
+    for button in args:
+        button.update(disabled=is_disabled)
+
+
 def humansize(nbytes):
     suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
     i = 0
