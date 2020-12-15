@@ -3,10 +3,10 @@ from pathlib import Path
 
 
 class Window(Enum):
-    WIDTH = 150
-    HEIGHT = 100
-    MARGIN = (WIDTH, HEIGHT)
-
+    SIZE = (1350, 900)
+    LEFT_MARGIN = 130
+    TOP_MARGIN = 80
+    MARGIN = (LEFT_MARGIN, TOP_MARGIN)
 
 class Button(Enum):
     SUBMIT = '-submit_button-'
@@ -38,8 +38,12 @@ class Video(Enum):
 
 class ProgBar(Enum):
     PROGRESS_BAR = '-prog_bar-'
+    MAX_VALUE = 100
 
 
 class DownloadSize(Enum):
     DOWNLOAD_SIZE = '-download_size-'
 
+
+class Font(Enum):
+    DEFAULT = ("Helvetica", 12)

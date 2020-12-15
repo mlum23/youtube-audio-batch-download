@@ -2,9 +2,10 @@ import io
 from PIL import Image, ImageTk
 import requests
 import datetime
+from default_values import DownloadSize
 
 
-def get_img_data(img_url, maxsize=(350, 350), first=False):
+def get_img_data(img_url, maxsize=(500, 500), first=False):
     response = requests.get(img_url, stream=True)
     img = Image.open(response.raw)
     img.thumbnail(maxsize)
@@ -38,6 +39,10 @@ def generate_folder():
 def disable_buttons(is_disabled, *args):
     for button in args:
         button.update(disabled=is_disabled)
+
+
+def update_download_size_message(download_size, window):
+    window[DownloadSize.DOWNLOAD_SIZE].update(f'Approx. Download Size: {humansize(download_size)}')
 
 
 def humansize(nbytes):
