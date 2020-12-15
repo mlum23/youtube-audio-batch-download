@@ -33,3 +33,14 @@ def generate_folder():
     date_time = datetime.datetime.now().strftime('%m_%d_%Y_%H_%M_%S')
     name = f'Youtube_Audio_Batch_Downloader_{date_time}'
     return name
+
+
+def humansize(nbytes):
+    suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+    i = 0
+    while nbytes >= 1024 and i < len(suffixes)-1:
+        nbytes /= 1024.
+        i += 1
+    f = ('%.2f' % nbytes).rstrip('0').rstrip('.')
+    return '%s %s' % (f, suffixes[i])
+

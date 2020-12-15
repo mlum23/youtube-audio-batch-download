@@ -20,7 +20,7 @@ class Button(Enum):
 class Input(Enum):
     DOWNLOAD_LOCATION = '-download_location-'
     DEFAULT_LINK = 'https://www.youtube.com/watch?v=F_rJFbWrK3Y'
-    DEFAULT_PLAYLIST = 'https://www.youtube.com/watch?v=RUQl6YcMalg&list=PLDIoUOhQQPlXr63I_vwF9GD8sAKh77dWU'
+    DEFAULT_PLAYLIST = 'https://www.youtube.com/watch?v=2tQRlpNIEEU&list=PLhkTlkgX3j0sxvUCwE8r22Exyj6mxBbWK'
     DEFAULT_DOWNLOAD_PATH = str(Path.home() / 'Downloads')
     URL = '-url-'
     PLAYLIST_URL = '-playlist_url-'
@@ -38,4 +38,8 @@ class Video(Enum):
 
 class ProgBar(Enum):
     PROGRESS_BAR = '-prog_bar-'
+
+
+class DownloadSize(Enum):
+    DOWNLOAD_SIZE = '-download_size-'
 

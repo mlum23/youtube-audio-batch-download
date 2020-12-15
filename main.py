@@ -1,9 +1,8 @@
 import PySimpleGUI as sg
 from pytube import YouTube, exceptions, Playlist
-import pytube
-from helpers import get_img_data, update_thumbnail_preview, generate_folder
+from helpers import get_img_data, generate_folder, humansize
 import os
-from keys import Window, Button, Input, List, Video, ProgBar
+from keys import Window, Button, Input, List, Video, ProgBar, DownloadSize
 
 
 url_handler = [
@@ -31,7 +30,8 @@ url_handler = [
         sg.FolderBrowse()
     ],
     [
-        sg.Button('Download All', enable_events=True, disabled=True, key=Button.DOWNLOAD_ALL)
+        sg.Button('Download All', enable_events=True, disabled=True, key=Button.DOWNLOAD_ALL),
+        sg.Text('Approx. Download Size: 0 B', size=(40, 1), key=DownloadSize.DOWNLOAD_SIZE)
     ],
     [
         sg.ProgressBar(100, orientation='h', size=(20, 20), key=ProgBar.PROGRESS_BAR)
@@ -71,6 +71,9 @@ title_list = []
 audio_download_list = []
 image_list = []
 
+# Download size
+download_size = 0
+
 # Event Loop
 while True:
     event, values = window.read()
@@ -97,6 +100,8 @@ while True:
             image_list.append(img_data)
 
             audio = video.streams.get_audio_only()
+            download_size += audio.filesize
+            window[DownloadSize.DOWNLOAD_SIZE].update(f'Approx. Download Size: {humansize(download_size)}')
 
             title_list.append(video.title)
             audio_download_list.append(audio)
@@ -109,19 +114,24 @@ while True:
         submit_button.update(disabled=False)
 
     elif event == Button.PLAYLIST_SUBMIT:
-        # submit_playlist_button.update(disabled=True)
+        download_button.update(disabled=True)
+        delete_all.update(disabled=True)
+        delete_selection.update(disabled=True)
+        submit_button.update(disabled=True)
+
         url = values[Input.PLAYLIST_URL]
         try:
             window[Input.CURRENT_DOWNLOAD].update('Initializing...')
             videos = Playlist(url)  # Returns array of URLs
-            window[ProgBar.PROGRESS_BAR].update(len(videos))
+
         except (exceptions.RegexMatchError, KeyError):
             sg.Popup('Cannot find video', title='Error')
 
         else:
-            print(f'Videos:{videos}')
-            print(len(videos))
+            num_videos_found = len(videos)
             count = 0
+            iter = 100 / num_videos_found
+            print(f'iter: {iter}')
             if len(videos) == 0:
                 sg.Popup('Invalid Playlist')
                 window[Input.CURRENT_DOWNLOAD].update('')
@@ -136,8 +146,10 @@ while True:
                             exceptions.VideoRegionBlocked):
                         continue
                     else:
+                        audio = video.streams.get_audio_only()
                         title_list.append(video.title)
-                        audio_download_list.append(video.streams.get_audio_only())
+                        audio_download_list.append(audio)
+                        download_size += audio.filesize
 
                         img_url = video.thumbnail_url
                         img_data = get_img_data(img_url)
@@ -145,16 +157,19 @@ while True:
                         image_list.append(img_data)
                         video_list.update(values=title_list)
                         video_title.update(video.title)
+
+                        window[DownloadSize.DOWNLOAD_SIZE].update(f'Approx. Download Size: {humansize(download_size)}')
                     finally:
-                        window[ProgBar.PROGRESS_BAR].update_bar(count + 1)
-                        count += 1
+                        print(count)
+                        window[ProgBar.PROGRESS_BAR].update_bar(count + iter)
+                        count += iter
 
                 window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
 
                 download_button.update(disabled=False)
                 delete_all.update(disabled=False)
                 delete_selection.update(disabled=False)
-
+                submit_button.update(disabled=False)
 
     elif event == Button.DELETE_SELECTION:
         try:
@@ -162,6 +177,7 @@ while True:
         except IndexError:
             continue
         else:
+            download_size -= audio_download_list[index].filesize
             del title_list[index]
             del audio_download_list[index]
             del image_list[index]
@@ -178,16 +194,19 @@ while True:
                 video_title.update(title_list[index - 1])
 
             video_list.update(title_list)
+            window[DownloadSize.DOWNLOAD_SIZE].update(f'Approx. Download Size: {humansize(download_size)}')
 
     elif event == Button.DELETE_ALL:
         title_list = []
         audio_download_list = []
         image_list = []
+        download_size = 0
         video_list.update(values=title_list)
         delete_all.update(disabled=True)
         delete_selection.update(disabled=True)
         video_img.update(data=DEFAULT_IMG_DATA)
         video_title.update(DEFAULT_TITLE)
+        window[DownloadSize.DOWNLOAD_SIZE].update(f'Approx. Download Size: 0 B')
 
     elif event == List.DOWNLOAD_LIST:
         try:
@@ -201,6 +220,13 @@ while True:
     elif event == Button.DOWNLOAD_ALL:
         folder_name = generate_folder()
         download_path = os.path.join(values[Input.DOWNLOAD_LOCATION], folder_name)
-        print(download_path)
+        num_videos= len(title_list)
+        count = 0
+        iter = 100 / num_videos
+        window[Input.CURRENT_DOWNLOAD].update('Downloading: ')
         for audio in audio_download_list:
+            window[Input.CURRENT_DOWNLOAD].update(f'Downloading: {audio.title} ')
             audio.download(download_path)
+            window[ProgBar.PROGRESS_BAR].update_bar(count + iter)
+            count += iter
+        window[Input.CURRENT_DOWNLOAD].update('Download completed!')
