@@ -11,7 +11,7 @@ class Window(Enum):
 class Button(Enum):
     SUBMIT = '-submit_button-'
     PLAYLIST_SUBMIT = '-submit_playlist_button-'
-    UPLOAD = '-upload_button-'
+    CSV_UPLOAD = '-csv_upload-'
     DELETE_SELECTION = '-delete_selection-'
     DELETE_ALL = '-delete_all-'
     DOWNLOAD_ALL = '-download_all-'

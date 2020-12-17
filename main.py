@@ -3,6 +3,7 @@ from pytube import YouTube, exceptions, Playlist
 from helpers import get_img_data, generate_folder, disable_buttons, update_download_size_message
 import os
 from default_values import Window, Button, Input, List, Video, ProgBar, DownloadSize, Font
+import csv
 
 
 class YouTubeAudioBatchDownloader:
@@ -25,7 +26,7 @@ class YouTubeAudioBatchDownloader:
                 sg.Button('Submit', enable_events=True, font=Font.DEFAULT.value, key=Button.PLAYLIST_SUBMIT)
             ],
             [
-                sg.Button('Upload Batch File (.txt only)', enable_events=True, key=Button.UPLOAD),
+                sg.FileBrowse('Upload Batch File (CSV only)', enable_events=True, key=Button.CSV_UPLOAD),
                 sg.Button('Delete selection', enable_events=True, font=Font.DEFAULT.value,
                           disabled=True, key=Button.DELETE_SELECTION),
                 sg.Button('Delete All',
@@ -129,17 +130,24 @@ class YouTubeAudioBatchDownloader:
     def __message_non_empty_list(self):
         self.__window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
 
+    def __handle_csv_upload(self, test):
+        print(test)
+
     def __handle_submit_single_video(self):
         disable_buttons(True, self.__submit_button, self.__submit_playlist_button)
         url = self.__values[Input.URL]
         try:
             video = YouTube(url)
-        except (exceptions.RegexMatchError, KeyError):
+        except (exceptions.RegexMatchError,
+                exceptions.VideoUnavailable,
+                exceptions.VideoPrivate,
+                exceptions.VideoRegionBlocked,
+                KeyError):
             sg.Popup('Cannot find video', title='Error')
 
         else:
-            self.__update_preview(video)
             self.__update_lists(video)
+        finally:
             disable_buttons(False, self.__download_button, self.__delete_all, self.__delete_selection)
 
         disable_buttons(False, self.__submit_button, self.__submit_playlist_button)
@@ -154,15 +162,15 @@ class YouTubeAudioBatchDownloader:
         try:
             self.__window[Input.CURRENT_DOWNLOAD].update('Initializing...')
             videos = Playlist(url)  # Returns array of URLs
-
-        except (exceptions.RegexMatchError, KeyError):
-            sg.Popup('Cannot find video', title='Error')
-
-        else:
             num_videos_found = len(videos)
             current_progress_bar_value = 0
             progress_bar_iterator = ProgBar.MAX_VALUE.value / num_videos_found
 
+        except (exceptions.RegexMatchError, KeyError, ZeroDivisionError):
+            sg.Popup('Cannot find playlist', title='Error')
+            self.__window[Input.CURRENT_DOWNLOAD].update('')
+
+        else:
             if len(videos) == 0:  # Valid link but not a playlist or no videos found
                 sg.Popup('Invalid Playlist')
                 self.__window[Input.CURRENT_DOWNLOAD].update('')
@@ -178,17 +186,19 @@ class YouTubeAudioBatchDownloader:
                         continue
                     else:
                         self.__update_lists(video)
-                        self.__update_preview(video)
                         update_download_size_message(self.__download_size, self.__window)
                     finally:
                         self.__window[ProgBar.PROGRESS_BAR].update_bar(current_progress_bar_value
                                                                        + progress_bar_iterator)
                         current_progress_bar_value += progress_bar_iterator
 
-                self.__window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
+                    self.__window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
 
+        finally:
+            disable_buttons(False, self.__submit_button, self.__submit_playlist_button)
+            if self.__title_list:
                 disable_buttons(False, self.__download_button, self.__delete_all,
-                                self.__delete_selection, self.__submit_button, self.__submit_playlist_button)
+                                self.__delete_selection)
 
     def __handle_delete_selection(self):
         try:
@@ -242,6 +252,10 @@ class YouTubeAudioBatchDownloader:
             if self.__event == sg.WIN_CLOSED:
                 break
 
+            elif self.__event == Button.CSV_UPLOAD:
+                print(self.__values[3])
+                self.__handle_csv_upload(self.__values)
+
             elif self.__event == Button.SUBMIT:
                 self.__handle_submit_single_video()
 
@@ -258,6 +272,8 @@ class YouTubeAudioBatchDownloader:
             elif self.__event == List.DOWNLOAD_LIST:
                 try:
                     index = self.__video_list.Widget.curselection()[0]
+                    print(index)
+                    print(self.__image_list)
                 except IndexError:
                     continue
                 else:
