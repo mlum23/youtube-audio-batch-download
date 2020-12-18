@@ -26,9 +26,25 @@ class YouTubeAudioBatchDownloader:
                 sg.Button('Submit', enable_events=True, font=Font.DEFAULT.value, key=Button.PLAYLIST_SUBMIT)
             ],
             [
-                sg.FileBrowse('Upload Batch File (CSV only)', enable_events=True, key=Button.CSV_UPLOAD),
-                sg.Button('Delete selection', enable_events=True, font=Font.DEFAULT.value,
-                          disabled=True, key=Button.DELETE_SELECTION),
+                sg.Text('CSV File:', font=Font.DEFAULT.value),
+                sg.InputText('C:/Users/micha/Desktop/test.csv', font=Font.DEFAULT.value, key=Input.CSV_LOCATION),
+                sg.FileBrowse('Browse',
+                              file_types=(('CSV Files', '*.csv'),),
+                              enable_events=True,
+                              font=Font.DEFAULT.value,
+                              key=Button.CSV_UPLOAD),
+                sg.Button('Submit',
+                          enable_events=True,
+                          font=Font.DEFAULT.value,
+                          key=Button.CSV_SUBMIT)
+            ],
+            [
+              sg.Button('Delete selection',
+                        enable_events=True,
+                        font=Font.DEFAULT.value,
+                        disabled=True,
+                        key=Button.DELETE_SELECTION),
+
                 sg.Button('Delete All',
                           enable_events=True,
                           disabled=True,
@@ -42,7 +58,7 @@ class YouTubeAudioBatchDownloader:
             [
                 sg.Text('Download Location: ', size=(15, 1), font=Font.DEFAULT.value, auto_size_text=False),
                 sg.InputText(Input.DEFAULT_DOWNLOAD_PATH.value, font=Font.DEFAULT.value, key=Input.DOWNLOAD_LOCATION),
-                sg.FolderBrowse(font=Font.DEFAULT.value)
+                sg.FolderBrowse(font=Font.DEFAULT.value, key=Button.DOWNLOAD_LOCATION)
             ],
             [
                 sg.Button('Download All', enable_events=True, disabled=True,
@@ -52,7 +68,6 @@ class YouTubeAudioBatchDownloader:
             ],
             [
                 sg.ProgressBar(ProgBar.MAX_VALUE.value, orientation='h', size=(20, 20), key=ProgBar.PROGRESS_BAR),
-                sg.Button('Cancel Load/Download', font=Font.DEFAULT.value, disabled=True, key='cancel')
             ],
             [
                 sg.Text(size=(50, 1), key=Input.CURRENT_DOWNLOAD)
@@ -79,12 +94,15 @@ class YouTubeAudioBatchDownloader:
 
         self.__delete_all = self.__window[Button.DELETE_ALL]
         self.__submit_button = self.__window[Button.SUBMIT]
+        self.__csv_submit_button = self.__window[Button.CSV_SUBMIT]
+        self.__csv_browse_button = self.__window[Button.CSV_UPLOAD]
         self.__submit_playlist_button = self.__window[Button.PLAYLIST_SUBMIT]
         self.__delete_selection = self.__window[Button.DELETE_SELECTION]
         self.__download_button = self.__window[Button.DOWNLOAD_ALL]
         self.__video_title = self.__window[Video.TITLE]
         self.__video_list = self.__window[List.DOWNLOAD_LIST]
         self.__video_img = self.__window[Video.THUMBNAIL]
+        self.__download_location_button = self.__window[Button.DOWNLOAD_LOCATION]
 
     def __update_preview(self, video):
         title = video.title
@@ -111,6 +129,15 @@ class YouTubeAudioBatchDownloader:
         self.__audio_download_list.append(audio)
         self.__video_list.Widget.insert(len(self.__title_list) - 1, video.title)
 
+    def __disable_all_buttons(self, disabled):
+        disable_buttons(disabled, self.__delete_all, self.__submit_button, self.__csv_submit_button,
+                        self.__csv_browse_button, self.__submit_playlist_button, self.__delete_selection,
+                        self.__download_button, self.__download_location_button)
+
+    def __disable_upload_buttons(self, disabled):
+        disable_buttons(disabled, self.__submit_button, self.__csv_submit_button, self.__download_location_button,
+                        self.__csv_browse_button, self.__submit_playlist_button, self.__download_button)
+
     def __set_to_default(self):
         self.__title_list = []
         self.__audio_download_list = []
@@ -130,12 +157,8 @@ class YouTubeAudioBatchDownloader:
     def __message_non_empty_list(self):
         self.__window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
 
-    def __handle_csv_upload(self, test):
-        print(test)
-
-    def __handle_submit_single_video(self):
-        disable_buttons(True, self.__submit_button, self.__submit_playlist_button)
-        url = self.__values[Input.URL]
+    def __upload_single_video(self, url):
+        self.__disable_upload_buttons(True)
         try:
             video = YouTube(url)
         except (exceptions.RegexMatchError,
@@ -146,12 +169,55 @@ class YouTubeAudioBatchDownloader:
             sg.Popup('Cannot find video', title='Error')
 
         else:
+            update_text = 'Currently loading: ' + video.title
+            self.__window[Input.CURRENT_DOWNLOAD].update(update_text)
             self.__update_lists(video)
         finally:
-            disable_buttons(False, self.__download_button, self.__delete_all, self.__delete_selection)
+            if len(self.__title_list) > 0:
+                disable_buttons(False, self.__download_button, self.__delete_all, self.__delete_selection)
+            self.__disable_upload_buttons(False)
 
-        disable_buttons(False, self.__submit_button, self.__submit_playlist_button)
         self.__window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
+
+    def __upload_multi_video(self, array_of_links):
+        self.__disable_all_buttons(True)
+        num_videos = len(array_of_links)
+        current_progress_bar_value = 0
+        progress_bar_iterator = ProgBar.MAX_VALUE.value / num_videos
+        for link in array_of_links:
+            try:
+                video = YouTube(link)
+                update_text = 'Currently loading: ' + video.title
+                self.__window[Input.CURRENT_DOWNLOAD].update(update_text)
+            except (exceptions.VideoUnavailable,
+                    exceptions.VideoPrivate,
+                    exceptions.VideoRegionBlocked,
+                    exceptions.RegexMatchError):
+                continue
+            else:
+                self.__update_lists(video)
+                update_download_size_message(self.__download_size, self.__window)
+            finally:
+                self.__window[ProgBar.PROGRESS_BAR].update_bar(current_progress_bar_value
+                                                               + progress_bar_iterator)
+                current_progress_bar_value += progress_bar_iterator
+
+        self.__window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
+        self.__disable_all_buttons(False)
+
+    def __handle_csv_upload(self):
+        csv_file = self.__values[Input.CSV_LOCATION]
+
+        with open(csv_file, 'r') as file:
+            data = list(csv.reader(file))
+            data = [link[0] for link in data]
+            self.__upload_multi_video(data)
+
+    def __handle_submit_single_video(self):
+        disable_buttons(True, self.__submit_button, self.__submit_playlist_button,
+                        self.__csv_browse_button, self.__csv_submit_button)
+        url = self.__values[Input.URL]
+        self.__upload_single_video(url)
 
     def __handle_submit_playlist(self):
         disable_buttons(True, self.__download_button, self.__delete_all,
@@ -160,45 +226,15 @@ class YouTubeAudioBatchDownloader:
         url = self.__values[Input.PLAYLIST_URL]
 
         try:
-            self.__window[Input.CURRENT_DOWNLOAD].update('Initializing...')
             videos = Playlist(url)  # Returns array of URLs
-            num_videos_found = len(videos)
-            current_progress_bar_value = 0
-            progress_bar_iterator = ProgBar.MAX_VALUE.value / num_videos_found
 
-        except (exceptions.RegexMatchError, KeyError, ZeroDivisionError):
+        except (exceptions.RegexMatchError, KeyError):
             sg.Popup('Cannot find playlist', title='Error')
             self.__window[Input.CURRENT_DOWNLOAD].update('')
-
+            return
         else:
-            if len(videos) == 0:  # Valid link but not a playlist or no videos found
-                sg.Popup('Invalid Playlist')
-                self.__window[Input.CURRENT_DOWNLOAD].update('')
-            else:
-                for link in videos:
-                    try:
-                        video = YouTube(link)
-                        update_text = 'Currently loading: ' + video.title
-                        self.__window[Input.CURRENT_DOWNLOAD].update(update_text)
-                    except (exceptions.VideoUnavailable,
-                            exceptions.VideoPrivate,
-                            exceptions.VideoRegionBlocked):
-                        continue
-                    else:
-                        self.__update_lists(video)
-                        update_download_size_message(self.__download_size, self.__window)
-                    finally:
-                        self.__window[ProgBar.PROGRESS_BAR].update_bar(current_progress_bar_value
-                                                                       + progress_bar_iterator)
-                        current_progress_bar_value += progress_bar_iterator
+            self.__upload_multi_video(videos)
 
-                    self.__window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
-
-        finally:
-            disable_buttons(False, self.__submit_button, self.__submit_playlist_button)
-            if self.__title_list:
-                disable_buttons(False, self.__download_button, self.__delete_all,
-                                self.__delete_selection)
 
     def __handle_delete_selection(self):
         try:
@@ -249,12 +285,12 @@ class YouTubeAudioBatchDownloader:
     def run(self):
         while True:
             self.__event, self.__values = self.__window.read()
+
             if self.__event == sg.WIN_CLOSED:
                 break
 
-            elif self.__event == Button.CSV_UPLOAD:
-                print(self.__values[3])
-                self.__handle_csv_upload(self.__values)
+            elif self.__event == Button.CSV_SUBMIT:
+                self.__handle_csv_upload()
 
             elif self.__event == Button.SUBMIT:
                 self.__handle_submit_single_video()
@@ -272,8 +308,7 @@ class YouTubeAudioBatchDownloader:
             elif self.__event == List.DOWNLOAD_LIST:
                 try:
                     index = self.__video_list.Widget.curselection()[0]
-                    print(index)
-                    print(self.__image_list)
+
                 except IndexError:
                     continue
                 else:
