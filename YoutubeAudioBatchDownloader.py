@@ -309,6 +309,9 @@ class YouTubeAudioBatchDownloader:
         self.__disable_all_buttons(False)
 
     def __handle_csv_upload(self):
+        """
+        Handles the event for the CSV upload button.
+        """
         csv_file = self.__values[Input.CSV_LOCATION]
         if not csv_file.lower().endswith('.csv'):
             sg.Popup('Invalid CSV file')
@@ -322,10 +325,16 @@ class YouTubeAudioBatchDownloader:
             sg.Popup('Unable to find file.')
 
     def __handle_submit_single_video(self):
+        """
+        Handles the event for submitting a single video URL.
+        """
         url = self.__values[Input.URL]
         self.__upload_single_video(url)
 
     def __handle_submit_playlist(self):
+        """
+        Handles the event for submitting a playlist.
+        """
         url = self.__values[Input.PLAYLIST_URL]
 
         try:
@@ -339,6 +348,12 @@ class YouTubeAudioBatchDownloader:
             self.__upload_multi_video(videos)
 
     def __handle_delete_selection(self):
+        """
+        Deletes the selected video in the video list of the GUI.
+
+        This also removes the info of the video from title_list, image_list,
+        and audio_download_list, as well as updates the download size.
+        """
         try:
             index = self.__video_list.Widget.curselection()[0]
         except IndexError:
@@ -369,6 +384,13 @@ class YouTubeAudioBatchDownloader:
                 self.__message_empty_list()
 
     def __handle_delete_above(self):
+        """
+        Deletes all videos above the selected index in the GUI video list.
+
+        This method also removes the info of the video from title_list, image_list,
+        and audio_download_list, as well as updates the download size.
+        :return:
+        """
         try:
             index = self.__video_list.Widget.curselection()[0]
         except IndexError:
@@ -391,6 +413,12 @@ class YouTubeAudioBatchDownloader:
             self.__update_list_of_videos()
 
     def __handle_delete_below(self):
+        """
+        Deletes all videos above the selected index in the GUI video list.
+
+        This also removes the info of the video from title_list, image_list,
+        and audio_download_list, as well as updates the download size.
+        """
         try:
             index = self.__video_list.Widget.curselection()[0]
         except IndexError:
@@ -413,6 +441,14 @@ class YouTubeAudioBatchDownloader:
             self.__update_list_of_videos()
 
     def __handle_download_all(self):
+        """
+        Downloads all videos in the GUI video list to file location.
+
+        This method creates a folder in the download location with all
+        the audio files in the video list.
+
+        The folder is in the format Youtube_Audio_Batch_Downloader_MM_DD_YYYY_hh_mm_ss
+        """
         folder_name = generate_folder()
         download_path = os.path.join(self.__values[Input.DOWNLOAD_LOCATION], folder_name)
         num_videos = len(self.__title_list)
@@ -429,6 +465,11 @@ class YouTubeAudioBatchDownloader:
         self.__window[Input.CURRENT_DOWNLOAD].update('Download completed!')
 
     def run(self):
+        """
+        Runs the event loop of PySimpleGUI.
+
+        This is what drives the program (ie: displays the GUI)
+        """
         while True:
             self.__event, self.__values = self.__window.read()
 
