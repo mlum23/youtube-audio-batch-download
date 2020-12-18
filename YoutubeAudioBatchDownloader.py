@@ -254,10 +254,21 @@ class YouTubeAudioBatchDownloader:
         """
         self.__window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
 
-    def __upload_single_video(self, link, multi_upload=False):
+    def __upload_single_video(self, video_url, multi_upload=False):
+        """
+        Loads the YouTube video from link.
+
+        This method gets the YouTube video using pytube, then internally updates the
+        title_list, image_list, and audio_list using the update_lists method.
+
+        :param video_url: the URL of the YouTube video, as a string.
+        :param multi_upload: False if this method is only being called once (ie: single upload)
+                             True if this method is being used for loading multiple videos
+                             (such as playlists and csv file).
+        """
         self.__disable_upload_buttons(True)
         try:
-            video = YouTube(link)
+            video = YouTube(video_url)
             update_text = 'Currently loading: ' + video.title
             self.__window[Input.CURRENT_DOWNLOAD].update(update_text)
         except (exceptions.VideoUnavailable,
@@ -276,12 +287,18 @@ class YouTubeAudioBatchDownloader:
         if not multi_upload:
             self.__window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
 
-    def __upload_multi_video(self, array_of_links):
+    def __upload_multi_video(self, array_of_video_urls):
+        """
+        Loads multiple YouTube videos.
+
+        This method is called when handling playlists and csv files.
+        :param array_of_video_urls: an array of URLs of YouTube videos, as a string.
+        """
         self.__disable_all_buttons(True)
-        num_videos = len(array_of_links)
+        num_videos = len(array_of_video_urls)
         current_progress_bar_value = 0
         progress_bar_iterator = ProgBar.MAX_VALUE.value / num_videos
-        for link in array_of_links:
+        for link in array_of_video_urls:
             self.__upload_single_video(link, multi_upload=True)
 
             self.__window[ProgBar.PROGRESS_BAR].update_bar(current_progress_bar_value
@@ -293,6 +310,9 @@ class YouTubeAudioBatchDownloader:
 
     def __handle_csv_upload(self):
         csv_file = self.__values[Input.CSV_LOCATION]
+        if not csv_file.lower().endswith('.csv'):
+            sg.Popup('Invalid CSV file')
+            return
         try:
             with open(csv_file, 'r') as file:
                 data = list(csv.reader(file))
