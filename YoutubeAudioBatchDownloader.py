@@ -7,7 +7,7 @@ source from YouTube with the help of pytube.
 
 import PySimpleGUI as sg
 from pytube import YouTube, exceptions, Playlist
-from helpers import get_img_data, generate_folder, disable_buttons, update_download_size_message
+from helpers import get_img_data, generate_folder, disable_buttons, humansize
 import os
 from default_values import Window, Button, Input, List, Video, ProgBar, DownloadSize, Font, Image
 import csv
@@ -172,7 +172,7 @@ class YouTubeAudioBatchDownloader:
 
         audio = video.streams.get_audio_only()
         self.__download_size += audio.filesize
-        update_download_size_message(self.__download_size, self.__window)
+        self.__update_download_size_message()
         self.__title_list.append(video.title)
         self.__audio_download_list.append(audio)
         self.__video_list.Widget.insert(len(self.__title_list) - 1, video.title)
@@ -182,6 +182,13 @@ class YouTubeAudioBatchDownloader:
         Updates the GUI's list of videos with the values in title_list
         """
         self.__video_list.update(values=self.__title_list)
+
+    def __update_download_size_message(self):
+        """
+        Updates the download size text.
+        """
+        self.__window[DownloadSize.DOWNLOAD_SIZE]\
+            .update(f'Approx. Download Size: {humansize(self.__download_size)}')
 
     def __disable_all_buttons(self, disabled):
         """
@@ -237,7 +244,7 @@ class YouTubeAudioBatchDownloader:
         self.__video_img.update(data=self.__DEFAULT_IMG_DATA)
         self.__video_title.update(self.__DEFAULT_TITLE)
         self.__window[ProgBar.PROGRESS_BAR].update_bar(0)
-        update_download_size_message(self.__download_size, self.__window)
+        self.__update_download_size_message()
 
     def __message_empty_list(self):
         """
@@ -278,7 +285,7 @@ class YouTubeAudioBatchDownloader:
             pass
         else:
             self.__update_lists(video)
-            update_download_size_message(self.__download_size, self.__window)
+            self.__update_download_size_message()
         finally:
             if len(self.__title_list) > 0 and not multi_upload:  # Edge case where no videos and wrong link
                 self.__disable_delete_buttons(False)
@@ -376,7 +383,7 @@ class YouTubeAudioBatchDownloader:
                 self.__video_title.update(self.__title_list[index - 1])
 
             self.__update_list_of_videos()
-            update_download_size_message(self.__download_size, self.__window)
+            self.__update_download_size_message()
 
             if self.__title_list:  # Not empty
                 self.__message_non_empty_list()
@@ -409,7 +416,7 @@ class YouTubeAudioBatchDownloader:
             self.__audio_download_list = self.__audio_download_list[index:]
             self.__image_list = self.__image_list[index:]
 
-            update_download_size_message(self.__download_size, self.__window)
+            self.__update_download_size_message()
             self.__update_list_of_videos()
 
     def __handle_delete_below(self):
@@ -437,7 +444,7 @@ class YouTubeAudioBatchDownloader:
             self.__audio_download_list = self.__audio_download_list[:index + 1]
             self.__image_list = self.__image_list[:index + 1]
 
-            update_download_size_message(self.__download_size, self.__window)
+            self.__update_download_size_message()
             self.__update_list_of_videos()
 
     def __handle_download_all(self):
