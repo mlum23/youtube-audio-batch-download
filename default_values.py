@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 class Window(Enum):
-    SIZE = (1350, 1000)
+    SIZE = (1350, 950)
     LEFT_MARGIN = 130
     TOP_MARGIN = 80
     MARGIN = (LEFT_MARGIN, TOP_MARGIN)

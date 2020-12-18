@@ -194,8 +194,8 @@ class YouTubeAudioBatchDownloader:
             self.__window[Input.CURRENT_DOWNLOAD].update(update_text)
             self.__update_lists(video)
         finally:
-            if len(self.__title_list) > 0:
-                disable_buttons(False, self.__download_button, self.__delete_all, self.__delete_selection)
+            if len(self.__title_list) > 0:  # Edge case where no videos and wrong link
+                self.__disable_delete_buttons(False)
             self.__disable_upload_buttons(False)
 
         self.__window[Input.CURRENT_DOWNLOAD].update('Ready to download!')
@@ -228,15 +228,15 @@ class YouTubeAudioBatchDownloader:
 
     def __handle_csv_upload(self):
         csv_file = self.__values[Input.CSV_LOCATION]
-
-        with open(csv_file, 'r') as file:
-            data = list(csv.reader(file))
-            data = [link[0] for link in data]
-            self.__upload_multi_video(data)
+        try:
+            with open(csv_file, 'r') as file:
+                data = list(csv.reader(file))
+                data = [link[0] for link in data]
+                self.__upload_multi_video(data)
+        except FileNotFoundError:
+            sg.Popup('Unable to find file.')
 
     def __handle_submit_single_video(self):
-        disable_buttons(True, self.__submit_button, self.__submit_playlist_button,
-                        self.__csv_browse_button, self.__csv_submit_button)
         url = self.__values[Input.URL]
         self.__upload_single_video(url)
 
@@ -317,7 +317,7 @@ class YouTubeAudioBatchDownloader:
             if index == len(self.__title_list) - 1:
                 return
 
-            for i in range(index, len(self.__title_list)):
+            for i in range(index + 1, len(self.__title_list)):
                 self.__download_size -= self.__audio_download_list[i].filesize
 
             self.__title_list = self.__title_list[:index + 1]
