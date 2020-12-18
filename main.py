@@ -44,6 +44,17 @@ class YouTubeAudioBatchDownloader:
                         font=Font.DEFAULT.value,
                         disabled=True,
                         key=Button.DELETE_SELECTION),
+              sg.Button('Delete Everything Above',
+                        enable_events=True,
+                        font=Font.DEFAULT.value,
+                        disabled=True,
+                        key=Button.DELETE_ABOVE),
+
+                sg.Button('Delete Everything Below',
+                          enable_events=True,
+                          disabled=True,
+                          font=Font.DEFAULT.value,
+                          key=Button.DELETE_BELOW),
 
                 sg.Button('Delete All',
                           enable_events=True,
@@ -93,11 +104,15 @@ class YouTubeAudioBatchDownloader:
                                   finalize=True)
 
         self.__delete_all = self.__window[Button.DELETE_ALL]
+        self.__delete_selection = self.__window[Button.DELETE_SELECTION]
+        self.__delete_above = self.__window[Button.DELETE_ABOVE]
+        self.__delete_below = self.__window[Button.DELETE_BELOW]
+
         self.__submit_button = self.__window[Button.SUBMIT]
         self.__csv_submit_button = self.__window[Button.CSV_SUBMIT]
         self.__csv_browse_button = self.__window[Button.CSV_UPLOAD]
         self.__submit_playlist_button = self.__window[Button.PLAYLIST_SUBMIT]
-        self.__delete_selection = self.__window[Button.DELETE_SELECTION]
+
         self.__download_button = self.__window[Button.DOWNLOAD_ALL]
         self.__video_title = self.__window[Video.TITLE]
         self.__video_list = self.__window[List.DOWNLOAD_LIST]
@@ -129,22 +144,28 @@ class YouTubeAudioBatchDownloader:
         self.__audio_download_list.append(audio)
         self.__video_list.Widget.insert(len(self.__title_list) - 1, video.title)
 
+    def __update_list_of_videos(self):
+        self.__video_list.update(values=self.__title_list)
+
     def __disable_all_buttons(self, disabled):
-        disable_buttons(disabled, self.__delete_all, self.__submit_button, self.__csv_submit_button,
-                        self.__csv_browse_button, self.__submit_playlist_button, self.__delete_selection,
-                        self.__download_button, self.__download_location_button)
+        self.__disable_delete_buttons(disabled)
+        self.__disable_upload_buttons(disabled)
 
     def __disable_upload_buttons(self, disabled):
         disable_buttons(disabled, self.__submit_button, self.__csv_submit_button, self.__download_location_button,
                         self.__csv_browse_button, self.__submit_playlist_button, self.__download_button)
+
+    def __disable_delete_buttons(self, disabled):
+        disable_buttons(disabled, self.__delete_all, self.__delete_selection,
+                        self.__delete_above, self.__delete_below)
 
     def __set_to_default(self):
         self.__title_list = []
         self.__audio_download_list = []
         self.__image_list = []
         self.__download_size = 0
-        self.__video_list.update(values=self.__title_list)
-        disable_buttons(True, self.__delete_all, self.__delete_selection, self.__download_button)
+        self.__update_list_of_videos()
+        self.__disable_delete_buttons(True)
         self.__video_img.update(data=self.__DEFAULT_IMG_DATA)
         self.__video_title.update(self.__DEFAULT_TITLE)
         self.__window[ProgBar.PROGRESS_BAR].update_bar(0)
@@ -220,9 +241,6 @@ class YouTubeAudioBatchDownloader:
         self.__upload_single_video(url)
 
     def __handle_submit_playlist(self):
-        disable_buttons(True, self.__download_button, self.__delete_all,
-                        self.__delete_selection, self.__submit_button, self.__submit_playlist_button)
-
         url = self.__values[Input.PLAYLIST_URL]
 
         try:
@@ -234,7 +252,6 @@ class YouTubeAudioBatchDownloader:
             return
         else:
             self.__upload_multi_video(videos)
-
 
     def __handle_delete_selection(self):
         try:
@@ -248,7 +265,7 @@ class YouTubeAudioBatchDownloader:
             del self.__image_list[index]
 
             if not self.__title_list:
-                disable_buttons(True, self.__delete_all, self.__delete_selection)
+                self.__disable_delete_buttons(True)
                 self.__video_img.update(data=self.__DEFAULT_IMG_DATA)
                 self.__video_title.update(self.__DEFAULT_TITLE)
             else:
@@ -258,13 +275,57 @@ class YouTubeAudioBatchDownloader:
                 self.__video_img.update(data=self.__image_list[index - 1])
                 self.__video_title.update(self.__title_list[index - 1])
 
-            self.__video_list.update(self.__title_list)
+            self.__update_list_of_videos()
             update_download_size_message(self.__download_size, self.__window)
 
             if self.__title_list:  # Not empty
                 self.__message_non_empty_list()
             else:  # Empty list
                 self.__message_empty_list()
+
+    def __handle_delete_above(self):
+        try:
+            index = self.__video_list.Widget.curselection()[0]
+        except IndexError:
+            pass
+        else:
+            if len(self.__title_list) < 2:
+                return
+
+            if index == 0:
+                return
+
+            for i in range(index):
+                self.__download_size -= self.__audio_download_list[i].filesize
+
+            self.__title_list = self.__title_list[index:]
+            self.__audio_download_list = self.__audio_download_list[index:]
+            self.__image_list = self.__image_list[index:]
+
+            update_download_size_message(self.__download_size, self.__window)
+            self.__update_list_of_videos()
+
+    def __handle_delete_below(self):
+        try:
+            index = self.__video_list.Widget.curselection()[0]
+        except IndexError:
+            pass
+        else:
+            if len(self.__title_list) < 2:
+                return
+
+            if index == len(self.__title_list) - 1:
+                return
+
+            for i in range(index, len(self.__title_list)):
+                self.__download_size -= self.__audio_download_list[i].filesize
+
+            self.__title_list = self.__title_list[:index + 1]
+            self.__audio_download_list = self.__audio_download_list[:index + 1]
+            self.__image_list = self.__image_list[:index + 1]
+
+            update_download_size_message(self.__download_size, self.__window)
+            self.__update_list_of_videos()
 
     def __handle_download_all(self):
         folder_name = generate_folder()
@@ -300,6 +361,12 @@ class YouTubeAudioBatchDownloader:
 
             elif self.__event == Button.DELETE_SELECTION:
                 self.__handle_delete_selection()
+
+            elif self.__event == Button.DELETE_ABOVE:
+                self.__handle_delete_above()
+
+            elif self.__event == Button.DELETE_BELOW:
+                self.__handle_delete_below()
 
             elif self.__event == Button.DELETE_ALL:
                 self.__set_to_default()

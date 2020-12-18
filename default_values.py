@@ -16,6 +16,8 @@ class Button(Enum):
     CSV_SUBMIT = '-csv_submit'
     DELETE_SELECTION = '-delete_selection-'
     DELETE_ALL = '-delete_all-'
+    DELETE_ABOVE = '-delete_above-'
+    DELETE_BELOW = '-delete_below'
     DOWNLOAD_ALL = '-download_all-'
     DOWNLOAD_LOCATION = '-download_location-'
 
