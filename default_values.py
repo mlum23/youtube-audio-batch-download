@@ -53,3 +53,8 @@ class DownloadSize(Enum):
 
 class Font(Enum):
     DEFAULT = ("Helvetica", 12)
+
+
+class Image(Enum):
+    DEFAULT = 'https://static.wixstatic.com/media/71372e_6b4a1c9bd3f446a2842b688626cbc3d0~mv2' \
+                                 '.png/v1/fill/w_300%2Ch_300%2Cal_c%2Cq_90/file.jpg'
