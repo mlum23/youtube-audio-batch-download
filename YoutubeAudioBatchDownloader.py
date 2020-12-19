@@ -282,7 +282,8 @@ class YouTubeAudioBatchDownloader:
                 exceptions.VideoPrivate,
                 exceptions.VideoRegionBlocked,
                 exceptions.RegexMatchError):
-            pass
+            sg.Popup('Invalid URL')
+            return
         else:
             self.__update_lists(video)
             self.__update_download_size_message()
@@ -464,7 +465,12 @@ class YouTubeAudioBatchDownloader:
         The folder is in the format Youtube_Audio_Batch_Downloader_MM_DD_YYYY_hh_mm_ss
         """
         folder_name = generate_folder()
+        if not os.path.isdir(self.__values[Input.DOWNLOAD_LOCATION]):
+            sg.Popup('Invalid path. Unable to download.')
+            return
+
         download_path = os.path.join(self.__values[Input.DOWNLOAD_LOCATION], folder_name)
+
         num_videos = len(self.__title_list)
         current_progress_bar = 0
         progress_bar_iterator = ProgBar.MAX_VALUE.value / num_videos
