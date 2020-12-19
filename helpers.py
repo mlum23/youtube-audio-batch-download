@@ -8,7 +8,6 @@ import io
 from PIL import Image, ImageTk
 import requests
 import datetime
-from default_values import DownloadSize
 
 
 def get_img_data(img_url, first=False):
