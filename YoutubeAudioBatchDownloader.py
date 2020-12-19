@@ -303,7 +303,14 @@ class YouTubeAudioBatchDownloader:
         """
         self.__disable_all_buttons(True)
         num_videos = len(array_of_video_urls)
+        if num_videos == 0:
+            sg.Popup('Invalid playlist')
+            self.__disable_upload_buttons(False)
+            if len(self.__title_list) > 0:
+                self.__disable_delete_buttons(False)
+            return
         current_progress_bar_value = 0
+
         progress_bar_iterator = ProgBar.MAX_VALUE.value / num_videos
         for link in array_of_video_urls:
             self.__upload_single_video(link, multi_upload=True)
