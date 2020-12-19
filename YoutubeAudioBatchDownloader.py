@@ -69,17 +69,17 @@ class YouTubeAudioBatchDownloader:
                         disabled=True,
                         key=Button.DELETE_ABOVE),
 
-                sg.Button('Delete Everything Below',
-                          enable_events=True,
-                          disabled=True,
-                          font=Font.DEFAULT.value,
-                          key=Button.DELETE_BELOW),
+              sg.Button('Delete Everything Below',
+                        enable_events=True,
+                        disabled=True,
+                        font=Font.DEFAULT.value,
+                        key=Button.DELETE_BELOW),
 
-                sg.Button('Delete All',
-                          enable_events=True,
-                          disabled=True,
-                          font=Font.DEFAULT.value,
-                          key=Button.DELETE_ALL)
+              sg.Button('Delete All',
+                        enable_events=True,
+                        disabled=True,
+                        font=Font.DEFAULT.value,
+                        key=Button.DELETE_ALL)
             ],
             [
                 sg.Listbox(values=[], size=(70, 20), font=Font.DEFAULT.value,
