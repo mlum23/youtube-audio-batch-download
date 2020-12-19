@@ -1,5 +1,5 @@
 """
-The YoutubeAudioBatchDownloader module containsa class which implements the layout of the GUI,
+The YoutubeAudioBatchDownloader module contains a class which implements the layout of the GUI,
 various event handlers for buttons, input text, and retrieving the media
 source from YouTube with the help of pytube.
 """
