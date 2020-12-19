@@ -36,17 +36,17 @@ class YouTubeAudioBatchDownloader:
         self.__main_layout = [
             [
                 sg.Text('Video URL:', font=Font.DEFAULT.value),
-                sg.InputText(Input.DEFAULT_LINK.value, font=Font.DEFAULT.value, key=Input.URL),
+                sg.InputText(font=Font.DEFAULT.value, key=Input.URL),
                 sg.Button('Submit', enable_events=True, font=Font.DEFAULT.value, key=Button.SUBMIT)
             ],
             [
                 sg.Text('Playlist URL: ', font=Font.DEFAULT.value),
-                sg.InputText(Input.DEFAULT_PLAYLIST.value, font=Font.DEFAULT.value, key=Input.PLAYLIST_URL),
+                sg.InputText(font=Font.DEFAULT.value, key=Input.PLAYLIST_URL),
                 sg.Button('Submit', enable_events=True, font=Font.DEFAULT.value, key=Button.PLAYLIST_SUBMIT)
             ],
             [
                 sg.Text('CSV File:', font=Font.DEFAULT.value),
-                sg.InputText('C:/Users/micha/Desktop/test.csv', font=Font.DEFAULT.value, key=Input.CSV_LOCATION),
+                sg.InputText(font=Font.DEFAULT.value, key=Input.CSV_LOCATION),
                 sg.FileBrowse('Browse',
                               file_types=(('CSV Files', '*.csv'),),
                               enable_events=True,

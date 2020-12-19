@@ -41,8 +41,6 @@ class Input(Enum):
     """
     CSV_LOCATION = '-csv_location-'
     DOWNLOAD_LOCATION = '-download_location-'
-    DEFAULT_LINK = 'https://www.youtube.com/watch?v=F_rJFbWrK3Y'
-    DEFAULT_PLAYLIST = 'https://www.youtube.com/watch?v=2tQRlpNIEEU&list=PLhkTlkgX3j0sxvUCwE8r22Exyj6mxBbWK'
     DEFAULT_DOWNLOAD_PATH = str(Path.home() / 'Downloads')
     URL = '-url-'
     PLAYLIST_URL = '-playlist_url-'
