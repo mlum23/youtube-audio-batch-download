@@ -4,6 +4,7 @@ It also contains the settings for the window size and default image/title
 for the video preview.
 """
 
+
 from enum import Enum
 from pathlib import Path
 
