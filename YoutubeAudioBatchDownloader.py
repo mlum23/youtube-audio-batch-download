@@ -278,11 +278,17 @@ class YouTubeAudioBatchDownloader:
             video = YouTube(video_url)
             update_text = 'Currently loading: ' + video.title
             self.__window[Input.CURRENT_DOWNLOAD].update(update_text)
+
+            if '&list' in video_url:
+                sg.Popup('Submit playlist in the "Playlist URL" section.')
+                return
+
         except (exceptions.VideoUnavailable,
                 exceptions.VideoPrivate,
                 exceptions.VideoRegionBlocked,
                 exceptions.RegexMatchError):
-            sg.Popup('Invalid URL')
+            if not multi_upload:
+                sg.Popup('Invalid URL')
             return
         else:
             self.__update_lists(video)
@@ -483,6 +489,7 @@ class YouTubeAudioBatchDownloader:
             self.__window[ProgBar.PROGRESS_BAR].update_bar(current_progress_bar + progress_bar_iterator)
             current_progress_bar += progress_bar_iterator
         self.__window[Input.CURRENT_DOWNLOAD].update('Download completed!')
+        sg.Popup('Download Completed!')
 
     def run(self):
         """
