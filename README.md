@@ -2,7 +2,10 @@
  A program that allows you to load unlisted and public YouTube videos and playlists 
  and download them all at once as individual MP4 files.  
  This program also supports reading CSV files that contain valid URLs to a YouTube 
- video/playlist.
+ video/playlist.  
+   
+ All downloaded files will be saved in a newly created file at the selected download
+ path.
  
   ## Demo
    [![Demo of App](./img/sample.png)](https://www.youtube.com/watch?v=F4dSwk73PIw)
