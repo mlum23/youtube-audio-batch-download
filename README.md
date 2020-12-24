@@ -5,13 +5,12 @@
  video/playlist.
  
   ## Demo
-   
    [![Demo of App](./img/sample.png)](https://www.youtube.com/watch?v=F4dSwk73PIw)
   ## Installation 
-
   * Install the required modules:  
-    ```pip install -r requirement.txt```  
-  * Run ```main.py```
+    ```pip install -r requirements.txt```  
+  * Run the program:  
+   ```python main.py```
 
   
   ## Technologies
