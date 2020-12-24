@@ -4,7 +4,7 @@
  This program also supports reading CSV files that contain valid URLs to a YouTube 
  video/playlist.  
    
- All downloaded files will be saved in a newly created file at the selected download
+ All downloaded files will be saved in a newly created folder at the selected download
  path.
  
   ## Demo
