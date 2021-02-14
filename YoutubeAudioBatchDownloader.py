@@ -11,6 +11,8 @@ from helpers import get_img_data, generate_folder, disable_buttons, humansize
 import os
 from default_values import Window, Button, Input, List, Video, ProgBar, DownloadSize, Font, Image
 import csv
+from moviepy.editor import *
+import re
 
 
 class YouTubeAudioBatchDownloader:
@@ -484,6 +486,10 @@ class YouTubeAudioBatchDownloader:
         for i in range(len(self.__audio_download_list)):
             self.__window[Input.CURRENT_DOWNLOAD].update(f'Downloading: {self.__audio_download_list[i].title} ')
             self.__audio_download_list[i].download(download_path)
+
+            # Convert MP4 to MP3 file
+            os.rename(download_path + f'\{self.__title_list[i]}.mp4', download_path + f'\{self.__title_list[i]}.mp3')
+
             self.__video_img.update(data=self.__image_list[i])
             self.__video_title.update(self.__title_list[i])
             self.__window[ProgBar.PROGRESS_BAR].update_bar(current_progress_bar + progress_bar_iterator)
