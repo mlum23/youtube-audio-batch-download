@@ -8,11 +8,9 @@ source from YouTube with the help of pytube.
 import PySimpleGUI as sg
 from pytube import YouTube, exceptions, Playlist
 from helpers import get_img_data, generate_folder, disable_buttons, humansize
-import os
 from default_values import Window, Button, Input, List, Video, ProgBar, DownloadSize, Font, Image
 import csv
-from moviepy.editor import *
-import re
+import os
 
 
 class YouTubeAudioBatchDownloader:
