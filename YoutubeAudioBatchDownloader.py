@@ -310,6 +310,7 @@ class YouTubeAudioBatchDownloader:
         """
         self.__disable_all_buttons(True)
         num_videos = len(array_of_video_urls)
+
         if num_videos == 0:
             sg.Popup('Invalid playlist')
             self.__disable_upload_buttons(False)

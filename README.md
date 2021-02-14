@@ -1,6 +1,6 @@
 # Youtube Audio Batch Downloader - Python App
  A program that allows you to load unlisted and public YouTube videos and playlists 
- and download them all at once as individual MP4 files.  
+ and download them all at once as individual MP3 files.  
  This program also supports reading CSV files that contain valid URLs to a YouTube 
  video/playlist.  
    
