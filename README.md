@@ -8,7 +8,7 @@
  path.
  
   ## Demo
-   [![Demo of App](./img/sample.png)](https://www.youtube.com/watch?v=F4dSwk73PIw)
+   [![Demo of App](./img/sample.png)](https://www.youtube.com/watch?v=06AuU30kRA4)
   ## Installation 
   * Install the required modules:  
     ```pip install -r requirements.txt```  

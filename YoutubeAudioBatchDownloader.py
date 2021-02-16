@@ -483,11 +483,12 @@ class YouTubeAudioBatchDownloader:
         progress_bar_iterator = ProgBar.MAX_VALUE.value / num_videos
         self.__window[Input.CURRENT_DOWNLOAD].update('Downloading: ')
         for i in range(len(self.__audio_download_list)):
+            title = self.__remove_special_char(self.__title_list[i])
             self.__window[Input.CURRENT_DOWNLOAD].update(f'Downloading: {self.__audio_download_list[i].title} ')
             self.__audio_download_list[i].download(download_path)
 
             # Convert MP4 to MP3 file
-            os.rename(download_path + f'\{self.__title_list[i]}.mp4', download_path + f'\{self.__title_list[i]}.mp3')
+            os.rename(download_path + f'\{title}.mp4', download_path + f'\{title}.mp3')
 
             self.__video_img.update(data=self.__image_list[i])
             self.__video_title.update(self.__title_list[i])
@@ -495,6 +496,19 @@ class YouTubeAudioBatchDownloader:
             current_progress_bar += progress_bar_iterator
         self.__window[Input.CURRENT_DOWNLOAD].update('Download completed!')
         sg.Popup('Download Completed!')
+
+    @staticmethod
+    def __remove_special_char(title):
+        """
+        Returns a title with no special characters.
+
+        :param title: the title of the video, as a string
+        :return: the title with no special characters, as a string
+        """
+        special_chars = ['\\', '<', '>', ':', '"', '/', '|', '?', '*', '~']
+        for char in special_chars:
+            title = title.replace(char, "")
+        return title
 
     def run(self):
         """
