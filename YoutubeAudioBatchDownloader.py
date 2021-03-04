@@ -505,7 +505,7 @@ class YouTubeAudioBatchDownloader:
         :param title: the title of the video, as a string
         :return: the title with no special characters, as a string
         """
-        special_chars = ['\\', '<', '>', ':', '"', '/', '|', '?', '*', '~']
+        special_chars = ['\\', '<', '>', ':', '"', '/', '|', '?', '*', '~', '.']
         for char in special_chars:
             title = title.replace(char, "")
         return title
