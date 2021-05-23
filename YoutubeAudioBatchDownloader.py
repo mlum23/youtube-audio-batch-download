@@ -11,7 +11,10 @@ from helpers import get_img_data, generate_folder, disable_buttons, humansize
 from default_values import Window, Button, Input, List, Video, ProgBar, DownloadSize, Font, Image
 import csv
 import os
-
+from mutagen.mp3 import MP3
+from mutagen.id3 import ID3, APIC
+import urllib.request as urllib2
+from moviepy.editor import AudioFileClip
 
 class YouTubeAudioBatchDownloader:
     """
@@ -33,6 +36,7 @@ class YouTubeAudioBatchDownloader:
         self.__title_list = []
         self.__audio_download_list = []
         self.__image_list = []
+        self.__thumbnail_jpg_list = []
         self.__main_layout = [
             [
                 sg.Text('Video URL:', font=Font.DEFAULT.value),
@@ -238,6 +242,7 @@ class YouTubeAudioBatchDownloader:
         self.__title_list = []
         self.__audio_download_list = []
         self.__image_list = []
+        self.__thumbnail_jpg_list = []
         self.__download_size = 0
         self.__update_list_of_videos()
         self.__disable_delete_buttons(True)
@@ -276,6 +281,7 @@ class YouTubeAudioBatchDownloader:
         self.__disable_upload_buttons(True)
         try:
             video = YouTube(video_url)
+            self.__thumbnail_jpg_list.append(video.thumbnail_url)
             update_text = 'Currently loading: ' + video.title
             self.__window[Input.CURRENT_DOWNLOAD].update(update_text)
 
@@ -477,7 +483,6 @@ class YouTubeAudioBatchDownloader:
             return
 
         download_path = os.path.join(self.__values[Input.DOWNLOAD_LOCATION], folder_name)
-
         num_videos = len(self.__title_list)
         current_progress_bar = 0
         progress_bar_iterator = ProgBar.MAX_VALUE.value / num_videos
@@ -487,8 +492,30 @@ class YouTubeAudioBatchDownloader:
             self.__window[Input.CURRENT_DOWNLOAD].update(f'Downloading: {self.__audio_download_list[i].title} ')
             self.__audio_download_list[i].download(download_path)
 
+            video_file = download_path + f'\{title}.mp4'
+            audio_file = download_path + f'\{title}.mp3'
+
             # Convert MP4 to MP3 file
-            os.rename(download_path + f'\{title}.mp4', download_path + f'\{title}.mp3')
+            clip = AudioFileClip(video_file)
+            clip.write_audiofile(audio_file)
+            clip.close()
+
+            os.remove(video_file)
+
+            # Add thumbnail image to MP3 file
+            response = urllib2.urlopen(self.__thumbnail_jpg_list[i])
+            imagedata = response.read()
+            audio = MP3(audio_file, ID3=ID3)
+            audio.tags.add(
+                APIC(
+                    encoding=3,
+                    mime='image/jpeg',
+                    type=3,
+                    desc=u'Cover',
+                    data=imagedata
+                )
+            )
+            audio.save()
 
             self.__video_img.update(data=self.__image_list[i])
             self.__video_title.update(self.__title_list[i])
@@ -505,7 +532,7 @@ class YouTubeAudioBatchDownloader:
         :param title: the title of the video, as a string
         :return: the title with no special characters, as a string
         """
-        special_chars = ['\\', '<', '>', ':', '"', '/', '|', '?', '*', '~', '.', ',']
+        special_chars = ['\\', '<', '>', ':', '"', '/', '|', '?', '*', '~', '.', ',', '#', "'"]
         for char in special_chars:
             title = title.replace(char, "")
         return title
