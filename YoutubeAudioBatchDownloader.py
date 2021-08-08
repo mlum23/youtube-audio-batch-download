@@ -16,6 +16,7 @@ from mutagen.id3 import ID3, APIC
 import urllib.request as urllib2
 from moviepy.editor import AudioFileClip
 
+
 class YouTubeAudioBatchDownloader:
     """
     This class implements the layout of the GUI using PySimpleGUI,

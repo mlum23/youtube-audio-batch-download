@@ -18,8 +18,8 @@
   
   ## Technologies
   * [Python 3.9](https://www.python.org/)
-  * [PySimpleGUI 4.34.0](https://pypi.org/project/PySimpleGUI/)
-  * [Pytube 10.4.1](https://python-pytube.readthedocs.io/en/latest/)
-  * [Pillow 8.1.0](https://pillow.readthedocs.io/en/stable/) 
-  * [Requests 2.25.1](https://requests.readthedocs.io/en/master/)
+  * [PySimpleGUI](https://pypi.org/project/PySimpleGUI/)
+  * [Pytube](https://python-pytube.readthedocs.io/en/latest/)
+  * [Pillow](https://pillow.readthedocs.io/en/stable/) 
+  * [Requests](https://requests.readthedocs.io/en/master/)
    
