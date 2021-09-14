@@ -1,4 +1,4 @@
 requests>=2.25.1
 Pillow>=8.1.0
 PySimpleGUI>=4.34.0
-pytube>=10.9.3
+pytube>=11.0.1
