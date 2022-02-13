@@ -34,10 +34,8 @@ class YouTubeAudioBatchDownloader:
         self.__download_size = 0
         self.__values = None
         self.__event = None
-        self.__title_list = []
-        self.__audio_download_list = []
-        self.__image_list = []
-        self.__thumbnail_jpg_list = []
+        self.__loaded_videos = []
+
         self.__main_layout = [
             [
                 sg.Text('Video URL:', font=Font.DEFAULT.value),
@@ -147,6 +145,14 @@ class YouTubeAudioBatchDownloader:
         self.__video_list = self.__window[List.DOWNLOAD_LIST]
         self.__video_img = self.__window[Video.THUMBNAIL]
 
+    def __get_titles_array(self):
+        """
+        Returns an array of video titles as a string.
+
+        :return: an array of video titles represented as a string
+        """
+        return [video['title'] for video in self.__loaded_videos]
+
     def __update_preview(self, video):
         """
         Updates the preview thumbnail and title of the video.
@@ -159,12 +165,6 @@ class YouTubeAudioBatchDownloader:
         title = video.title
         self.__video_title.update(title)
 
-        # Update image
-        img_url = video.thumbnail_url
-        img_data = get_img_data(img_url)
-        self.__video_img.update(data=img_data)
-        self.__image_list.append(img_data)
-
     def __update_lists(self, video):
         """
         Updates the title_list, audio_download_list, and image_list (via update_preview)
@@ -175,18 +175,28 @@ class YouTubeAudioBatchDownloader:
         # Update image and title
         self.__update_preview(video)
 
+        img_url = video.thumbnail_url
+        img_data = get_img_data(img_url)
+        self.__video_img.update(data=img_data)
         audio = video.streams.get_audio_only()
+
+        video_obj = {
+            'title': video.title,
+            'thumbnail': video.thumbnail_url,
+            'image': img_data,
+            'audio': audio
+        }
+
+        self.__loaded_videos.append(video_obj)
         self.__download_size += audio.filesize
         self.__update_download_size_message()
-        self.__title_list.append(video.title)
-        self.__audio_download_list.append(audio)
-        self.__video_list.Widget.insert(len(self.__title_list) - 1, video.title)
+        self.__video_list.Widget.insert(len(self.__loaded_videos) - 1, self.__loaded_videos[-1]['title'])
 
     def __update_list_of_videos(self):
         """
         Updates the GUI's list of videos with the values in title_list
         """
-        self.__video_list.update(values=self.__title_list)
+        self.__video_list.update(values=self.__get_titles_array())
 
     def __update_download_size_message(self):
         """
@@ -240,10 +250,7 @@ class YouTubeAudioBatchDownloader:
         Sets all settings back to the initial settings
         (all arrays empty, download size set to 0, etc.)
         """
-        self.__title_list = []
-        self.__audio_download_list = []
-        self.__image_list = []
-        self.__thumbnail_jpg_list = []
+        self.__loaded_videos = []
         self.__download_size = 0
         self.__update_list_of_videos()
         self.__disable_delete_buttons(True)
@@ -282,7 +289,6 @@ class YouTubeAudioBatchDownloader:
         self.__disable_upload_buttons(True)
         try:
             video = YouTube(video_url)
-            self.__thumbnail_jpg_list.append(video.thumbnail_url)
             update_text = 'Currently loading: ' + video.title
             self.__window[Input.CURRENT_DOWNLOAD].update(update_text)
 
@@ -301,7 +307,7 @@ class YouTubeAudioBatchDownloader:
             self.__update_lists(video)
             self.__update_download_size_message()
         finally:
-            if len(self.__title_list) > 0 and not multi_upload:  # Edge case where no videos and wrong link
+            if len(self.__loaded_videos) > 0 and not multi_upload:  # Edge case where no videos and wrong link
                 self.__disable_delete_buttons(False)
             self.__disable_upload_buttons(False)
 
@@ -321,7 +327,7 @@ class YouTubeAudioBatchDownloader:
         if num_videos == 0:
             sg.Popup('Invalid playlist')
             self.__disable_upload_buttons(False)
-            if len(self.__title_list) > 0:
+            if len(self.__get_titles_array()) > 0:
                 self.__disable_delete_buttons(False)
             return
         current_progress_bar_value = 0
@@ -380,20 +386,19 @@ class YouTubeAudioBatchDownloader:
         """
         Deletes the selected video in the video list of the GUI.
 
-        This also removes the info of the video from title_list, image_list,
-        and audio_download_list, as well as updates the download size.
+        This method removes the video from loaded_videos array,
+        as well as update the download size.
         """
         try:
             index = self.__video_list.Widget.curselection()[0]
+            video = self.__loaded_videos[index]
         except IndexError:
             pass
         else:
-            self.__download_size -= self.__audio_download_list[index].filesize
-            del self.__title_list[index]
-            del self.__audio_download_list[index]
-            del self.__image_list[index]
+            self.__download_size -= video['audio'].filesize
+            del self.__loaded_videos[index]
 
-            if not self.__title_list:
+            if not self.__loaded_videos:
                 self.__disable_delete_buttons(True)
                 self.__video_img.update(data=self.__DEFAULT_IMG_DATA)
                 self.__video_title.update(self.__DEFAULT_TITLE)
@@ -401,13 +406,13 @@ class YouTubeAudioBatchDownloader:
                 if index == 0:
                     index = 1
 
-                self.__video_img.update(data=self.__image_list[index - 1])
-                self.__video_title.update(self.__title_list[index - 1])
+                self.__video_img.update(data=self.__loaded_videos[index - 1]['image'])
+                self.__video_title.update(self.__loaded_videos[index - 1]['title'])
 
             self.__update_list_of_videos()
             self.__update_download_size_message()
 
-            if self.__title_list:  # Not empty
+            if self.__loaded_videos:  # Not empty
                 self.__message_non_empty_list()
             else:  # Empty list
                 self.__message_empty_list()
@@ -416,27 +421,24 @@ class YouTubeAudioBatchDownloader:
         """
         Deletes all videos above the selected index in the GUI video list.
 
-        This method also removes the info of the video from title_list, image_list,
-        and audio_download_list, as well as updates the download size.
-        :return:
+        This method removes all elements in loaded_videos with index less than
+        the selected video, as well as update the download size.
         """
         try:
             index = self.__video_list.Widget.curselection()[0]
         except IndexError:
             pass
         else:
-            if len(self.__title_list) < 2:
+            if len(self.__loaded_videos) < 2:
                 return
 
             if index == 0:
                 return
 
             for i in range(index):
-                self.__download_size -= self.__audio_download_list[i].filesize
+                self.__download_size -= self.__loaded_videos[i]['audio'].filesize
 
-            self.__title_list = self.__title_list[index:]
-            self.__audio_download_list = self.__audio_download_list[index:]
-            self.__image_list = self.__image_list[index:]
+            self.__loaded_videos = self.__loaded_videos[index:]
 
             self.__update_download_size_message()
             self.__update_list_of_videos()
@@ -445,26 +447,24 @@ class YouTubeAudioBatchDownloader:
         """
         Deletes all videos above the selected index in the GUI video list.
 
-        This also removes the info of the video from title_list, image_list,
-        and audio_download_list, as well as updates the download size.
+        This method removes all elements in loaded_videos with index greater than
+        the selected video, as well as update the download size.
         """
         try:
             index = self.__video_list.Widget.curselection()[0]
         except IndexError:
             pass
         else:
-            if len(self.__title_list) < 2:
+            if len(self.__loaded_videos) < 2:
                 return
 
-            if index == len(self.__title_list) - 1:
+            if index == len(self.__loaded_videos) - 1:
                 return
 
-            for i in range(index + 1, len(self.__title_list)):
-                self.__download_size -= self.__audio_download_list[i].filesize
+            for i in range(index + 1, len(self.__loaded_videos)):
+                self.__download_size -= self.__loaded_videos[i]['audio'].filesize
 
-            self.__title_list = self.__title_list[:index + 1]
-            self.__audio_download_list = self.__audio_download_list[:index + 1]
-            self.__image_list = self.__image_list[:index + 1]
+            self.__loaded_videos = self.__loaded_videos[:index + 1]
 
             self.__update_download_size_message()
             self.__update_list_of_videos()
@@ -479,19 +479,22 @@ class YouTubeAudioBatchDownloader:
         The folder is in the format Youtube_Audio_Batch_Downloader_MM_DD_YYYY_hh_mm_ss
         """
         folder_name = generate_folder()
+
         if not os.path.isdir(self.__values[Input.DOWNLOAD_LOCATION]):
             sg.Popup('Invalid path. Unable to download.')
             return
 
         download_path = os.path.join(self.__values[Input.DOWNLOAD_LOCATION], folder_name)
-        num_videos = len(self.__title_list)
+        num_videos = len(self.__loaded_videos)
         current_progress_bar = 0
         progress_bar_iterator = ProgBar.MAX_VALUE.value / num_videos
+
         self.__window[Input.CURRENT_DOWNLOAD].update('Downloading: ')
-        for i in range(len(self.__audio_download_list)):
-            title = self.__remove_special_char(self.__title_list[i])
-            self.__window[Input.CURRENT_DOWNLOAD].update(f'Downloading: {self.__audio_download_list[i].title} ')
-            self.__audio_download_list[i].download(download_path)
+
+        for video in self.__loaded_videos:
+            title = self.__remove_special_char(video['title'])
+            self.__window[Input.CURRENT_DOWNLOAD].update(f'Downloading: {video["title"]} ')
+            video['audio'].download(download_path)
 
             video_file = download_path + f'\{title}.mp4'
             audio_file = download_path + f'\{title}.mp3'
@@ -504,7 +507,7 @@ class YouTubeAudioBatchDownloader:
             os.remove(video_file)
 
             # Add thumbnail image to MP3 file
-            response = urllib2.urlopen(self.__thumbnail_jpg_list[i])
+            response = urllib2.urlopen(video['thumbnail'])
             imagedata = response.read()
             audio = MP3(audio_file, ID3=ID3)
             audio.tags.add(
@@ -518,8 +521,8 @@ class YouTubeAudioBatchDownloader:
             )
             audio.save()
 
-            self.__video_img.update(data=self.__image_list[i])
-            self.__video_title.update(self.__title_list[i])
+            self.__video_img.update(data=video['image'])
+            self.__video_title.update(video['title'])
             self.__window[ProgBar.PROGRESS_BAR].update_bar(current_progress_bar + progress_bar_iterator)
             current_progress_bar += progress_bar_iterator
         self.__window[Input.CURRENT_DOWNLOAD].update('Download completed!')
@@ -579,8 +582,8 @@ class YouTubeAudioBatchDownloader:
                 except IndexError:
                     continue
                 else:
-                    self.__video_img.update(data=self.__image_list[index])
-                    self.__video_title.update(self.__title_list[index])
+                    self.__video_img.update(data=self.__loaded_videos[index]['image'])
+                    self.__video_title.update(self.__loaded_videos[index]['title'])
 
             elif self.__event == Button.DOWNLOAD_ALL:
                 self.__handle_download_all()
