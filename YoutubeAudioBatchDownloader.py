@@ -89,9 +89,10 @@ class YouTubeAudioBatchDownloader:
                            enable_events=True, no_scrollbar=False, key=List.DOWNLOAD_LIST)
             ],
             [
-                sg.Text('Download Location: ', size=(15, 1), font=Font.DEFAULT.value, auto_size_text=False),
+                sg.Text('Save: ', size=(5, 1), font=Font.DEFAULT.value, auto_size_text=False),
                 sg.InputText(Input.DEFAULT_DOWNLOAD_PATH.value, font=Font.DEFAULT.value, key=Input.DOWNLOAD_LOCATION),
-                sg.FolderBrowse(font=Font.DEFAULT.value, key=Button.DOWNLOAD_LOCATION)
+                sg.FolderBrowse(font=Font.DEFAULT.value, key=Button.DOWNLOAD_LOCATION),
+                sg.Button('Open Directory', font=Font.DEFAULT.value, key=Button.OPEN_DOWNLOAD_LOCATION, enable_events=True)
             ],
             [
                 sg.Button('Download All', enable_events=True, disabled=True,
@@ -139,7 +140,7 @@ class YouTubeAudioBatchDownloader:
         # Download related buttons
         self.__download_button = self.__window[Button.DOWNLOAD_ALL]
         self.__download_location_button = self.__window[Button.DOWNLOAD_LOCATION]
-
+        
         # Preview screen
         self.__video_title = self.__window[Video.TITLE]
         self.__video_list = self.__window[List.DOWNLOAD_LIST]
@@ -587,3 +588,6 @@ class YouTubeAudioBatchDownloader:
 
             elif self.__event == Button.DOWNLOAD_ALL:
                 self.__handle_download_all()
+            
+            elif self.__event == Button.OPEN_DOWNLOAD_LOCATION:
+                os.startfile(self.__values[Input.DOWNLOAD_LOCATION])

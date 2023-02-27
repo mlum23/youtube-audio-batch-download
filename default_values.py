@@ -33,6 +33,7 @@ class Button(Enum):
     DELETE_BELOW = '-delete_below'
     DOWNLOAD_ALL = '-download_all-'
     DOWNLOAD_LOCATION = '-download_location-'
+    OPEN_DOWNLOAD_LOCATION = '-open_download_location-'
 
 
 class Input(Enum):
